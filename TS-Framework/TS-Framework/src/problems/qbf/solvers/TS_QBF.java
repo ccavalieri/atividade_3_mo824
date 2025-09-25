@@ -22,7 +22,7 @@ public class TS_QBF extends AbstractTS<Integer> {
     private final Integer fake = new Integer(-1);
 
     private boolean bestImproving; // true = best improving, false = first improving
-    private String tabuStrategy; // "default", "intensificationRestart", "diversificationRestart", "strategicOscillation"
+    private String tabuStrategy; // "default", "intensificationRestart", "diversificationRestart"
     private int[] usageCount;
     private double diversificationFixationRate = 0.2;
     private double diversificationSelectionProbability = 0.5;
@@ -228,7 +228,14 @@ public class TS_QBF extends AbstractTS<Integer> {
                 sol.clear();
                 sol.addAll(bestSol);
                 sol.cost = bestSol.cost;
+                
+                // Limpar lista tabu para permitir exploração mais livre ao redor da melhor solução
+                TL.clear();
+                for (int i = 0; i < 2 * tenure; i++) {
+                    TL.add(fake);
+                }
                 break;
+                
             case "diversificationRestart":
                 // 1. Identificar variáveis raramente usadas
                 // Encontra as 'k' variáveis com a menor contagem de uso
@@ -259,17 +266,7 @@ public class TS_QBF extends AbstractTS<Integer> {
 
                 ObjFunction.evaluate(sol);
                 break;
-            case "strategicOscillation":
-                // Estratégia para alternar a solução (exemplo simples)
-                if (!sol.isEmpty()) {
-                    sol.remove(sol.iterator().next());
-                }
-                int randAdd = (int) (Math.random() * ObjFunction.getDomainSize());
-                if (!sol.contains(randAdd)) {
-                    sol.add(randAdd);
-                }
-                ObjFunction.evaluate(sol);
-                break;
+                
             default:
                 // Estratégia padrão - não faz nada
                 break;
@@ -285,7 +282,7 @@ public class TS_QBF extends AbstractTS<Integer> {
         int tenure1 = 7;
         int tenure2 = 15;
         String instance = "TS-Framework/TS-Framework/instances/qbf/qbf060";
-
+        
         // Configuração 1 - padrão: first improving, tenure T1, estratégia default
         TS_QBF ts1 = new TS_QBF(tenure1, maxIter, instance, false, "default");
         long start1 = System.currentTimeMillis();
@@ -306,15 +303,34 @@ public class TS_QBF extends AbstractTS<Integer> {
         Solution<Integer> best3 = ts3.solve();
         long end3 = System.currentTimeMillis();
         System.out.println("PADRÃO+TENURE: " + best3 + " Tempo: " + (end3 - start3) / 1000.0 + " seg");
-
-        // Configuração 4 - first improving, tenure T1, estratégia diversificationRestart
-        TS_QBF ts4 = new TS_QBF(tenure1, maxIter, instance, false, "diversificationRestart", 0.2, 0.5);
+        
+        // Configuração 4 - first improving, tenure T1, estratégia intensificationRestart
+        TS_QBF ts4 = new TS_QBF(tenure1, maxIter, instance, false, "intensificationRestart");
         long start4 = System.currentTimeMillis();
         Solution<Integer> best4 = ts4.solve();
         long end4 = System.currentTimeMillis();
-        System.out.println("PADRÃO+DIVERSIFICATION: " + best4 + " Tempo: " + (end4 - start4) / 1000.0 + " seg");
+        System.out.println("PADRÃO+INTENSIFICATION: " + best4 + " Tempo: " + (end4 - start4) / 1000.0 + " seg");
 
-        // Você pode adicionar mais configurações para as estratégias alternativas se quiser
+        // Configuração 5 - first improving, tenure T1, estratégia diversificationRestart
+        TS_QBF ts5 = new TS_QBF(tenure1, maxIter, instance, false, "diversificationRestart", 0.2, 0.5);
+        long start5 = System.currentTimeMillis();
+        Solution<Integer> best5 = ts5.solve();
+        long end5 = System.currentTimeMillis();
+        System.out.println("PADRÃO+DIVERSIFICATION: " + best5 + " Tempo: " + (end5 - start5) / 1000.0 + " seg");
+        
+        // Configuração 6 - best improving, tenure T2, estratégia intensificationRestart
+        TS_QBF ts6 = new TS_QBF(tenure2, maxIter, instance, true, "intensificationRestart");
+        long start6 = System.currentTimeMillis();
+        Solution<Integer> best6 = ts6.solve();
+        long end6 = System.currentTimeMillis();
+        System.out.println("INTENSIFICATION+BEST+T2: " + best6 + " Tempo: " + (end6 - start6) / 1000.0 + " seg");
+
+        // Configuração 7 - first improving, tenure T2, estratégia intensificationRestart
+        TS_QBF ts7 = new TS_QBF(tenure2, maxIter, instance, false, "intensificationRestart");
+        long start7 = System.currentTimeMillis();
+        Solution<Integer> best7 = ts7.solve();
+        long end7 = System.currentTimeMillis();
+        System.out.println("INTENSIFICATION+T2: " + best7 + " Tempo: " + (end7 - start7) / 1000.0 + " seg");
 
     }
 }
